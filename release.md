@@ -42,5 +42,6 @@ Um executável em C que pergunta se queres ir ao BK. Se disseres que não, levas
 
 ### ⚠️ Nota
 
-O **Deus Whopper** transforma água em ketchup e pão em bifes de vaca.
+O Deus Whopper transforma água em ketchup e pão em bifes de vaca.
 Nunca mais dizes não ao BK.
+Full Changelog: https://github.com/Mateus-repo/Bk_Query/commits/v6.6.6-whoper-storm "
