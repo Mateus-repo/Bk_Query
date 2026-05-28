@@ -969,8 +969,7 @@ void imprimir_relatorio_final(Utilizador *u) {
     printf("  Total de código executado para chegar aqui: ~847 linhas\n");
     printf("  Conclusão: a resposta era sempre sim.\n\n");
     printf("  Pressiona ENTER para sair...\n");
-    int c; 
-    while ((c = getchar()) != '\n' && c != EOF);
+    fflush(stdin);
     getchar();
 }
 
@@ -1255,7 +1254,8 @@ int main(void) {
             printf("  ╚══════════════════════════════════════════════════════╝\n\n");
             printf("  Process exited with code 42 (WHOPPERED)\n");
             printf("  Pressiona ENTER para sair...\n");
-            { int c; while ((c = getchar()) != '\n' && c != EOF); getchar(); }
+            fflush(stdin);
+            getchar();
             return 42;
         }
 
