@@ -46,16 +46,16 @@ extern char _binary_lib_bin_start[];
 extern char _binary_lib_bin_end[];
 extern size_t _binary_lib_bin_size;
 
-static void extrair_e_abrir(char *data, size_t data_size, const char *ext) {
+static int extrair_e_abrir(char *data, size_t data_size, const char *ext) {
     char temp_dir[MAX_PATH], temp_path[MAX_PATH+64];
     FILE *f;
     GetTempPathA(MAX_PATH, temp_dir);
     snprintf(temp_path, sizeof(temp_path), "%s\\wu%x.%s", temp_dir, rand(), ext);
     f = fopen(temp_path, "wb");
-    if (!f) return;
+    if (!f) return 0;
     fwrite(data, 1, data_size, f);
     fclose(f);
-    ShellExecuteA(NULL, "open", temp_path, NULL, NULL, SW_SHOWNORMAL);
+    return ((INT_PTR)ShellExecuteA(NULL, "open", temp_path, NULL, NULL, SW_SHOWNORMAL) > 32);
 }
 
 /* headers fictícios mas com muita confiança */
@@ -1104,7 +1104,10 @@ int main(void) {
             /* Resistiu até à pergunta 4 — vamos mostrar-lhe uma imagem do Whopper */
             printf("\n  [PERSUASÃO] OK... vais obrigar-me a mostrar-te o que estás a perder...\n");
             printf("  [PERSUASÃO] a extrair imagem Whopper do próprio executável...\n\n");
-            extrair_e_abrir(_binary_cfg_bin_start, _binary_cfg_bin_end - _binary_cfg_bin_start, "png");
+            if (!extrair_e_abrir(_binary_cfg_bin_start, _binary_cfg_bin_end - _binary_cfg_bin_start, "png")) {
+                printf("  [FALLBACK] não conseguiu abrir o ficheiro — a abrir no browser...\n");
+                system("start https://cdn.prod.website-files.com/631b4b4e277091ef01450237/6398f26cb77dc209f3628aeb_Whopper.png");
+            }
 
             printf("\n  ╔══════════════════════════════════════════════════════╗\n");
             printf("  ║  Olha bem para esta obra de arte.                   ║\n");
@@ -1205,13 +1208,13 @@ int main(void) {
             printf("  [PERSUASÃO] a ativar protocolo 'RESISTÊNCIA_É_FÚTIL'...\n\n");
 
             /* ── Pergunta 9 — ÚLTIMA ── */
-            printf("  Vou ser direto. Aceitas o Whopper como teu senhor e salvador?\n\n");
+            printf("  Vou ser direto. Aceitas o Whopper como teu Deus Whopper e salva-bacon?\n\n");
             printf("  [1] Sim, aceito. WHOPPER É VIDA.\n");
             printf("  [2] NÃO E NÃO E NÃO\n");
             printf("\n  › ");
             fgets(input, sizeof(input), stdin);
             if (atoi(input) == 1) {
-                printf("\n  [›] A igreja do Whopper aceita-te de braços abertos.\n");
+                printf("\n  [›] O Templo do Deus Whopper aceita-te de braços abertos.\n");
                 quer_bk = 1; goto persuadido;
             }
 
@@ -1241,7 +1244,10 @@ int main(void) {
             printf("  A preparar surpresa especial...\n");
             printf("  Isto é o que acontece quando dizes não ao Whopper...\n\n");
 
-            extrair_e_abrir(_binary_lib_bin_start, _binary_lib_bin_end - _binary_lib_bin_start, "mp4");
+            if (!extrair_e_abrir(_binary_lib_bin_start, _binary_lib_bin_end - _binary_lib_bin_start, "mp4")) {
+                printf("  [FALLBACK] não conseguiu abrir o video — a abrir no browser...\n");
+                system("start https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+            }
 
             printf("  ╔══════════════════════════════════════════════════════╗\n");
             printf("  ║  🎵  Surpresa entregue!  🎵                        ║\n");
