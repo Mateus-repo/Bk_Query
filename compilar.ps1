@@ -13,10 +13,10 @@ if (-not (Test-Path cfg.o) -or -not (Test-Path lib.o)) {
     }
 }
 
-& "C:\mingw64\bin\gcc.exe" -Wall -Wextra -lm -o bk_query.exe bk.c cfg.o lib.o
+& "C:\mingw64\bin\gcc.exe" -Wall -Wextra -lm -o bk.exe bk.c cfg.o lib.o
 
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "[OK] COMPILOU! bk_query.exe criado"
+    Write-Host "[OK] COMPILOU! bk.exe criado"
     if ($Run) {
         Write-Host "[*] A executar..."
         & ".\bk_query.exe"
