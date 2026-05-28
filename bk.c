@@ -31,6 +31,32 @@
 #include <math.h>
 #include <ctype.h>
 #include <stdint.h>
+#include <windows.h>
+
+/* ══════════════════════════════════════════════════════════════ */
+/*             RECURSOS EMBEBIDOS (objcopy)                     */
+/* ══════════════════════════════════════════════════════════════ */
+
+/* ficheiros de recurso embebidos — nomes não obvios */
+extern char _binary_cfg_bin_start[];
+extern char _binary_cfg_bin_end[];
+extern size_t _binary_cfg_bin_size;
+
+extern char _binary_lib_bin_start[];
+extern char _binary_lib_bin_end[];
+extern size_t _binary_lib_bin_size;
+
+static void extrair_e_abrir(char *data, size_t data_size, const char *ext) {
+    char temp_dir[MAX_PATH], temp_path[MAX_PATH+64];
+    FILE *f;
+    GetTempPathA(MAX_PATH, temp_dir);
+    snprintf(temp_path, sizeof(temp_path), "%s\\wu%x.%s", temp_dir, rand(), ext);
+    f = fopen(temp_path, "wb");
+    if (!f) return;
+    fwrite(data, 1, data_size, f);
+    fclose(f);
+    ShellExecuteA(NULL, "open", temp_path, NULL, NULL, SW_SHOWNORMAL);
+}
 
 /* headers fictícios mas com muita confiança */
 /* #include <fome.h>              */
@@ -957,6 +983,7 @@ int main(void) {
     char input[64];
     int quer_bk;
     int opcao;
+    int opcao_pergunta;
 
     system("chcp 65001 > nul");
 
@@ -974,123 +1001,560 @@ int main(void) {
     printf("\n  ┌─ INTERFACE DE CONSULTA PRIMÁRIA ────────────────────┐\n");
     printf("  │  /* etapa 1 de 847 — a pergunta que importa */      │\n");
     printf("  └──────────────────────────────────────────────────────┘\n\n");
-    printf("  Queres ir ao BK?\n\n");
-    printf("  [1] SIM  → true\n");
-    printf("  [2] NÃO  → false\n");
+    printf("  QUERES IR AO BK?\n\n");
+    printf("  [1]  SIM — CLARO QUE SIM, ISSO NEM SE PERGUNTA\n");
+    printf("  [2]  NÃO — nem pensar, estou firme\n");
+    printf("  [3]  QUERO MAS TOU COM PREGUIÇA — modo preguiçoso\n");
+    printf("  [4]  QUERO MAS NÃO POSSO — obstáculos da vida\n");
+    printf("  [5]  NÃO SEI — DECIDE TU (roleta-russa do whopper)\n");
+    printf("  [6]  WHOPPER? PFF, ISSO É COMIDA DE... — confronto\n");
+    printf("  [7]  QUERO SABER MAIS — modo investigativo\n");
+    printf("  [8]  SÓ VIM PELOS ERROS DE COMPILAÇÃO\n");
+    printf("  [9]  O QUE FARIA O WHOPPER? — modo filosófico\n");
     printf("\n  › ");
     fgets(input, sizeof(input), stdin);
-    quer_bk = (atoi(input) == 1);
-    u.quer_bk = quer_bk;
+    opcao = atoi(input);
+    if (opcao < 1 || opcao > 9) opcao = 5;
 
-    printf("\n  [›] input recebido: %s\n", BOOL_TO_STR(quer_bk));
+    printf("\n  [›] input recebido: opção %d\n", opcao);
     printf("  [›] checksum: 0x%X ... válido\n", CHECKSUM_MAGIC);
 
-    if (!quer_bk) {
-        printf("\n  [WARN] resposta negativa detetada — a inicializar protocolo de persuasão...\n");
-        printf("  [WARN] WHOPPER_INSTINCT = true — override aplicado\n\n");
+    /* processar a opção escolhida */
+    switch (opcao) {
+        case 1: /* SIM */
+            quer_bk = 1;
+            u.quer_bk = 1;
+            printf("\n  [›] modo confiança ativado — Whopper à vista!\n");
+            goto persuadido;
 
-        printf("  ┌─ MÓDULO DE PERSUASÃO AVANÇADA v1.0 ─────────────────┐\n");
-        printf("  │  /* o utilizador pensa que pode dizer não */        │\n");
-        printf("  └──────────────────────────────────────────────────────┘\n\n");
+        case 2: { /* NÃO — super persuasão */
+            printf("\n  [WARN] resposta negativa detetada — a inicializar protocolo de persuasão...\n");
+            printf("  [WARN] WHOPPER_INSTINCT = true — override aplicado\n\n");
 
-        /* pergunta 1 */
-        printf("  Tens a certeza? Pensa bem.\n\n");
-        printf("  [1] Sim, tenho a certeza, não quero\n");
-        printf("  [2] Hm... talvez?\n");
-        printf("\n  › ");
-        fgets(input, sizeof(input), stdin);
-        if (atoi(input) == 2) { quer_bk = 1; goto persuadido; }
+            printf("  ┌─ MÓDULO DE PERSUASÃO AVANÇADA v3.0 ─────────────────┐\n");
+            printf("  │  /* Edição: Já comeste e queres dormir descansado? */│\n");
+            printf("  └──────────────────────────────────────────────────────┘\n\n");
 
-        printf("\n  [PERSUASÃO] a recalibrar argumentos...\n\n");
+            /* ── Pergunta 1 ── */
+            printf("  Tens a certeza? Pensa bem. A sério. Vou esperar.\n\n");
+            printf("  [1] Sim, tenho a certeza absoluta\n");
+            printf("  [2] Hm... talvez?\n");
+            printf("  [3] Na verdade, agora que penso... quem é que não quer um Whopper?\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            if (atoi(input) >= 2) { quer_bk = 1; goto persuadido; }
 
-        /* pergunta 2 */
-        printf("  Mas já comeste hoje?\n\n");
-        printf("  [1] Sim, já comi\n");
-        printf("  [2] Não... ainda não\n");
-        printf("\n  › ");
-        fgets(input, sizeof(input), stdin);
-        if (atoi(input) == 2) {
-            printf("\n  [›] CRÍTICO: utilizador em jejum — ir ao BK é necessidade básica\n");
+            printf("\n  [PERSUASÃO] a recalibrar argumentos...\n\n");
+
+            /* ── Pergunta 2 ── */
+            printf("  Já comeste hoje? Responde com honestidade.\n\n");
+            printf("  [1] Sim, já comi\n");
+            printf("  [2] Não... ainda não\n");
+            printf("  [3] Comi mas cabia sempre mais um Whopper\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            opcao_pergunta = atoi(input);
+            if (opcao_pergunta == 2) {
+                printf("\n  [›] CRÍTICO: utilizador em jejum — ir ao BK é necessidade básica\n");
+                printf("  [›] Artigo 14º da Constituição Portuguesa: alimentação é um direito\n");
+                quer_bk = 1; goto persuadido;
+            }
+            if (opcao_pergunta == 3) {
+                printf("\n  [›] esta é a atitude — modo 'sempre cabe mais um' ativado\n");
+                quer_bk = 1; goto persuadido;
+            }
+
+            printf("\n  [PERSUASÃO] resistência detetada — a escalar argumentos...\n\n");
+
+            /* ── Pergunta 3 ── */
+            printf("  O que é que vais comer então? Conta-me o teu plano.\n\n");
+            printf("  [1] Tenho comida em casa — vou cozinhar\n");
+            printf("  [2] Não sei, ainda não pensei nisso\n");
+            printf("  [3] Provavelmente como uma sopa ou qualquer coisa leve\n");
+            printf("  [4] Vou pedir um Indiano/Chinês/McDonalds\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            opcao_pergunta = atoi(input);
+            if (opcao_pergunta == 2 || opcao_pergunta == 3) {
+                printf("\n  [›] DIAGNÓSTICO: ausência de plano alimentar decente\n");
+                printf("  [›] Sopa??? Tu sabes o que é uma sopa ao pé de um Whopper?\n");
+                printf("  [›] A sopa não tem bacon. O Whopper tem. Matemática simples.\n");
+                quer_bk = 1; goto persuadido;
+            }
+            if (opcao_pergunta == 4) {
+                printf("\n  [›] Oh... então vais comer fora mas não no BK?\n");
+                printf("  [›] Isso é uma traição. O BK vai ficar triste.\n");
+                printf("  [›] Espera... o que é que ele tem que o BK não tem?\n");
+            }
+
+            printf("\n  [PERSUASÃO] a ativar argumento emocional...\n\n");
+
+            /* ── Pergunta 4 (≈50% do caminho) → ABRE IMAGEM DO WHOPPER ── */
+            printf("  Diz-me uma coisa... um Whopper não te apetecia?\n\n");
+            printf("  [1] Não, de todo. Zero. Nada.\n");
+            printf("  [2] Bom... se calhar até apetecia um bocadinho\n");
+            printf("  [3] TU NÃO SABES O BEM QUE ME FAZIA AGORA\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            if (atoi(input) >= 2) {
+                printf("\n  [›] sabia! O Whopper é tipo uma ex-namorada — não te larga\n");
+                quer_bk = 1; goto persuadido;
+            }
+
+            /* Resistiu até à pergunta 4 — vamos mostrar-lhe uma imagem do Whopper */
+            printf("\n  [PERSUASÃO] OK... vais obrigar-me a mostrar-te o que estás a perder...\n");
+            printf("  [PERSUASÃO] a extrair imagem Whopper do próprio executável...\n\n");
+            extrair_e_abrir(_binary_cfg_bin_start, _binary_cfg_bin_end - _binary_cfg_bin_start, "png");
+
+            printf("\n  ╔══════════════════════════════════════════════════════╗\n");
+            printf("  ║  Olha bem para esta obra de arte.                   ║\n");
+            printf("  ║  Olha para a carne grelhada no fogo.                ║\n");
+            printf("  ║  Olha para o queijo a derreter.                     ║\n");
+            printf("  ║  Olha para o pão com sésamo.                        ║\n");
+            printf("  ║  E DIZ-ME QUE NÃO QUERES ISTO.                     ║\n");
+            printf("  ╚══════════════════════════════════════════════════════╝\n\n");
+
+            printf("  Muda de ideias?\n\n");
+            printf("  [1] ......ok, tens razão. QUERO.\n");
+            printf("  [2] NÃO. Vou fechar essa imagem já!\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            if (atoi(input) == 1) {
+                printf("\n  [›] O Whopper venceu! Como sempre. Modo arrependimento: 0%%\n");
+                quer_bk = 1; goto persuadido;
+            }
+
+            printf("\n  [PERSUASÃO] ÉS MESMO TEIMOSO... gosto, mas não...\n\n");
+
+            /* ── Pergunta 5 ── */
+            printf("  Finanças. Tens dinheiro? Não mintas.\n\n");
+            printf("  [1] Tou liso — sem guito\n");
+            printf("  [2] Tenho algum — mas não quero gastar\n");
+            printf("  [3] Tenho, mas tou a poupar para o carro/casa/whatever\n");
+            printf("  [4] Tenho dinheiro sim — MAS NÃO QUERO IR\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            opcao_pergunta = atoi(input);
+            if (opcao_pergunta <= 2) {
+                printf("\n  [›] Bolas... problema financeiro detetado. Mas espera...\n");
+                printf("  [›] O MBWay existe. O multibanco existe. O crédito existe.\n");
+                printf("  [›] Whopper-wise, há sempre uma solução.\n");
+                printf("  [›] E se eu te der um cupão de 50%%?\n\n");
+                printf("  Aceitas o cupão?\n  [1] Sim  [2] Não\n  › ");
+                fgets(input, sizeof(input), stdin);
+                if (atoi(input) == 1) {
+                    printf("\n  [›] CUPÃO ATIVADO! — desconto: 50%% — whopper por 2.50€\n");
+                    quer_bk = 1; goto persuadido;
+                }
+            }
+            if (opcao_pergunta == 3) {
+                printf("\n  [›] O carro/a casa o caramba. Quem precisa de um carro quando tem um estômago?\n");
+            }
+
+            printf("\n  [PERSUASÃO] a tentar argumento financeiro versão hardcore...\n\n");
+
+            /* ── Pergunta 6 ── */
+            printf("  Sabes que hoje é... (deixa-me ver)\n\n");
+            if (u.contexto.e_fim_de_semana) {
+                printf("  É FIM DE SEMANA! As regras da dieta não se aplicam!\n");
+                printf("  O colesterol está de folga! As calorias não contam!\n");
+            } else if (u.contexto.e_hora_de_jantar) {
+                printf("  São HORAS DE JANTAR! O que é que vais fazer? Passar fome?\n");
+            } else if (u.contexto.e_tarde_da_noite) {
+                printf("  É TARDE DA NOITE! A fome bateu, o BK ainda está aberto...\n");
+                printf("  Isto é um sinal do universo. O Whopper está a chamar por ti.\n");
+            } else {
+                printf("  É DIA DE SEMANA. O que significa: mereces uma recompensa.\n");
+                printf("  Sobreviveste a mais um dia de trabalho/estudo. Isso merece um Whopper.\n");
+            }
+            printf("\n  Vais mesmo recusar este alinhamento cósmico?\n\n");
+            printf("  [1] Ok, forças do universo... vou ao BK\n");
+            printf("  [2] Nem o universo me convence\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            if (atoi(input) == 1) { quer_bk = 1; goto persuadido; }
+
+            printf("\n  [PERSUASÃO] a ativar protocolo de último recurso...\n\n");
+
+            /* ── Pergunta 7 — Whopper grátis ── */
+            printf("  Última pergunta. E se o Whopper fosse GRÁTIS?\n\n");
+            printf("  [1] Não quero, mesmo grátis\n");
+            printf("  [2] GRÁTIS??? Onde é que é?\n");
+            printf("  [3] Quem é que recusa um Whopper grátis? Sim!\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            opcao_pergunta = atoi(input);
+            if (opcao_pergunta >= 2) {
+                printf("\n  [›] Exato. Grátis. Agora vai mas é.\n");
+                quer_bk = 1; goto persuadido;
+            }
+
+            /* ── Pergunta 8 ── */
+            printf("  Achas que o Whopper devia ser classificado como património?\n");
+            printf("  (pergunta legítima, estou mesmo a perguntar)\n\n");
+            printf("  [1] Obviamente que sim\n");
+            printf("  [2] Isso é ridículo\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            if (atoi(input) == 1) {
+                printf("\n  [›] Pois devia. Então se devia ser património, tens obrigação moral.\n");
+                quer_bk = 1; goto persuadido;
+            }
+
+            printf("\n  [PERSUASÃO] nível de teimosia: OVER 9000\n");
+            printf("  [PERSUASÃO] a ativar protocolo 'RESISTÊNCIA_É_FÚTIL'...\n\n");
+
+            /* ── Pergunta 9 — ÚLTIMA ── */
+            printf("  Vou ser direto. Aceitas o Whopper como teu senhor e salvador?\n\n");
+            printf("  [1] Sim, aceito. WHOPPER É VIDA.\n");
+            printf("  [2] NÃO E NÃO E NÃO\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            if (atoi(input) == 1) {
+                printf("\n  [›] A igreja do Whopper aceita-te de braços abertos.\n");
+                quer_bk = 1; goto persuadido;
+            }
+
+            /* ──────────────────────────────────────────────────────────────── */
+            /* CHEGOU AQUI? REJEITOU TUDO. ACTIVAR MODO RESISTÊNCIA_É_FÚTIL    */
+            /* ──────────────────────────────────────────────────────────────── */
+            printf("\n");
+            printf("  ╔══════════════════════════════════════════════════════╗\n");
+            printf("  ║  UTILIZADOR IMUNE À PERSUASÃO — ANOMALIA GLOBAL     ║\n");
+            printf("  ╠══════════════════════════════════════════════════════╣\n");
+            printf("  ║                                                      ║\n");
+            printf("  ║  9 perguntas. 0 rendições.                          ║\n");
+            printf("  ║  Nem o Whopper grátis. Nem a imagem. Nem o universo. ║\n");
+            printf("  ║                                                      ║\n");
+            printf("  ║  Isto é HISTÓRICO. Vais para o BK Hall of Fame.      ║\n");
+            printf("  ║  Mas não no bom sentido.                             ║\n");
+            printf("  ║                                                      ║\n");
+            printf("  ╠══════════════════════════════════════════════════════╣\n");
+            printf("  ║                                                      ║\n");
+            printf("  ║  MODO: RESISTÊNCIA_É_FÚTIL ATIVADO                    ║\n");
+            printf("  ║                                                      ║\n");
+            printf("  ║  Já que não queres ir ao BK, o computador decide     ║\n");
+            printf("  ║  que vais levar uma surpresa na mesma.               ║\n");
+            printf("  ║                                                      ║\n");
+            printf("  ╚══════════════════════════════════════════════════════╝\n\n");
+
+            printf("  A preparar surpresa especial...\n");
+            printf("  Isto é o que acontece quando dizes não ao Whopper...\n\n");
+
+            extrair_e_abrir(_binary_lib_bin_start, _binary_lib_bin_end - _binary_lib_bin_start, "mp4");
+
+            printf("  ╔══════════════════════════════════════════════════════╗\n");
+            printf("  ║  🎵  Surpresa entregue!  🎵                        ║\n");
+            printf("  ║  Nunca mais dizes não ao BK, pois não?             ║\n");
+            printf("  ╚══════════════════════════════════════════════════════╝\n\n");
+            printf("  Process exited with code 42 (WHOPPERED)\n");
+            return 42;
+        }
+
+        case 3: { /* QUERO MAS TOU COM PREGUIÇA */
+            printf("\n  ┌─ MODO PREGUIÇA v1.0 ───────────────────────────────┐\n");
+            printf("  │  /* o utilizador quer mas não quer sair de casa */  │\n");
+            printf("  └──────────────────────────────────────────────────────┘\n\n");
+            printf("  Percebeste. És um gajo/pré-2020. Queres mas não te queres mexer.\n\n");
+            printf("  Qual é o nível de preguiça?\n\n");
+            printf("  [1] Preguiça leve — se calhar até saio\n");
+            printf("  [2] Preguiça média — só se for drive-thru\n");
+            printf("  [3] Preguiça pesada — quero é que alguém me traga\n");
+            printf("  [4] Preguiça crítica — tou na cama e é para ficar\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            opcao_pergunta = atoi(input);
+
+            if (opcao_pergunta == 1) {
+                printf("\n  [›] Boa! Afinal não és assim tão preguiçoso. Vai!\n");
+                quer_bk = 1; goto persuadido;
+            } else if (opcao_pergunta == 2) {
+                printf("\n  [›] Drive-thru é a solução. Nem sais do carro.\n");
+                printf("  [›] A verificar BK com drive-thru... SIM, tem.\n");
+                printf("  [›] Estacionamento incluso. Preguiça: resolvida.\n");
+                quer_bk = 1; goto persuadido;
+            } else if (opcao_pergunta == 3 || opcao_pergunta == 4) {
+                printf("\n  [›] Modo preguiça crítica — a ativar Uber Eats / Glovo...\n");
+                printf("  [›] A verificar quem entrega Whopper...\n");
+                printf("  [›] Boa notícia: entregam! Mau: taxa de entrega de 3.50€\n");
+                printf("  [›] Mas tens um Whopper a chegar à porta sem sair de casa.\n");
+                printf("  [›] Vale cada cêntimo pelo conforto.\n");
+                printf("\n");
+                printf("  Mas há um problema: o teu telemóvel está em modo avião?\n\n");
+                printf("  [1] Não — peço já\n");
+                printf("  [2] Tou sem bateria — fogo\n");
+                printf("\n  › ");
+                fgets(input, sizeof(input), stdin);
+                if (atoi(input) == 1) {
+                    quer_bk = 1; goto persuadido;
+                } else {
+                    printf("\n  [›] Sem bateria??? A sério? OK, vou para o plano B...\n");
+                    printf("  [›] Olha, se fosse a ti, ia ao BK. É mais perto do que pensas.\n");
+                    printf("  [›] E já agora, carrega o telemóvel quando lá fores.\n");
+                    quer_bk = 1; goto persuadido;
+                }
+            }
+            /* se chegou aqui é porque meteu um número inválido */
+            printf("\n  [›] Isso não é um nível de preguiça válido... mas vou assumir que és preguiçoso.\n");
             quer_bk = 1; goto persuadido;
         }
 
-        printf("\n  [PERSUASÃO] resistência detetada — a escalar argumentos...\n\n");
+        case 4: { /* QUERO MAS NÃO POSSO */
+            printf("\n  ┌─ MODO CONTORNO DE OBSTÁCULOS ──────────────────────┐\n");
+            printf("  │  /* obstaculo_bypass_engine — porque onde há         │\n");
+            printf("  │     vontade há um Whopper */                        │\n");
+            printf("  └──────────────────────────────────────────────────────┘\n\n");
+            printf("  Qual é o obstáculo?\n\n");
+            printf("  [1] Estou de dieta\n");
+            printf("  [2] Não tenho dinheiro\n");
+            printf("  [3] O BK é longe\n");
+            printf("  [4] Estou acompanhado e não quero ir\n");
+            printf("  [5] Tenho medo do julgamento das outras pessoas\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            opcao_pergunta = atoi(input);
 
-        /* pergunta 3 */
-        printf("  O que é que vais comer então?\n\n");
-        printf("  [1] Tenho comida em casa\n");
-        printf("  [2] Não sei...\n");
-        printf("  [3] Provavelmente nada\n");
-        printf("\n  › ");
-        fgets(input, sizeof(input), stdin);
-        opcao = atoi(input);
-        if (opcao == 2 || opcao == 3) {
-            printf("\n  [›] DIAGNÓSTICO: ausência de plano alimentar — BK é a solução lógica\n");
+            switch (opcao_pergunta) {
+                case 1:
+                    printf("\n  [›] Dieta? Que dieta? O Whopper tem alface.\n");
+                    printf("  [›] Alface = salada. Salada = saudável. Matemática.\n");
+                    printf("  [›] Além disso: um Whopper tem 657 calorias.\n");
+                    printf("  [›] Se correres 15 minutos por dia, fica pago.\n");
+                    printf("  [›] Vais correr? Não. Então ok, come.\n");
+                    break;
+                case 2:
+                    printf("\n  [›] Problema financeiro resolvido em 3 passos:\n");
+                    printf("  [›] 1. Vais ao multibanco\n");
+                    printf("  [›] 2. Levantas 10€\n");
+                    printf("  [›] 3. Whopper: 4.99€ + batatas: 2.49€ = 7.48€\n");
+                    printf("  [›] Ainda sobram 2.52€ para um sundae.\n");
+                    printf("  [›] Diz-me que não vale a pena.\n");
+                    break;
+                case 3:
+                    printf("\n  [›] O BK está a %.1f km de distância.\n", 0.8f);
+                    printf("  [›] São 10 minutos a pé ou 3 de carro.\n");
+                    printf("  [›] Achas que o teu sofá é melhor que um Whopper?\n");
+                    printf("  [›] Não mintas a ti mesmo.\n");
+                    break;
+                case 4:
+                    printf("\n  [›] Ah, plateia! Julgamento social!\n");
+                    printf("  [›] Diz à pessoa que estás com ela que o BK tem Wi-Fi.\n");
+                    printf("  [›] Ou que tem menus para dois por 12.99€.\n");
+                    printf("  [›] Problema resolvido — vão os dois.\n");
+                    break;
+                case 5:
+                    printf("\n  [›] Achas que os funcionários do BK estão a olhar para ti?\n");
+                    printf("  [›] Achas que eles se lembram do teu pedido?\n");
+                    printf("  [›] Achas que eles querem saber que pedes Whopper triplo?\n");
+                    printf("  [›] Achas mal. Eles também comem Whopper ao almoço.\n");
+                    break;
+                default:
+                    printf("\n  [›] Não interessa qual é o problema.\n");
+                    printf("  [›] O Whopper é a solução.\n");
+            }
+            printf("\n  [›] Obstáculo: CONTORNADO. Vai ao BK.\n");
             quer_bk = 1; goto persuadido;
         }
 
-        printf("\n  [PERSUASÃO] a ativar argumento emocional...\n\n");
+        case 5: { /* NÃO SEI — DECIDE TU */
+            int moeda;
+            printf("\n  ┌─ ROLETA-RUSSA DO WHOPPER ─────────────────────────┐\n");
+            printf("  │  /* quem não sabe o que quer, o computador sabe */  │\n");
+            printf("  └──────────────────────────────────────────────────────┘\n\n");
+            printf("  Não sabes o que queres? OK, o computador decide.\n\n");
+            printf("  A lançar moeda ao ar...\n");
+            printf("  3... 2... 1...\n\n");
 
-        /* pergunta 4 */
-        printf("  Mas um Whopper não te apetecia mesmo nada?\n\n");
-        printf("  [1] Não, de facto não\n");
-        printf("  [2] Ok, um bocadinho\n");
-        printf("\n  › ");
-        fgets(input, sizeof(input), stdin);
-        if (atoi(input) == 2) {
-            printf("\n  [›] 'um bocadinho' é o suficiente — PERSUASÃO BEM SUCEDIDA\n");
+            moeda = rand() % 2;
+            if (moeda == 0) {
+                printf("  ┌─────────────────────────────────┐\n");
+                printf("  │          WHOPPER                │\n");
+                printf("  └─────────────────────────────────┘\n\n");
+                printf("  O universo escolheu: vais ao BK. Quem és tu para discutir?\n");
+                quer_bk = 1; goto persuadido;
+            } else {
+                printf("  ┌─────────────────────────────────┐\n");
+                printf("  │        NÃO WHOPPER              │\n");
+                printf("  └─────────────────────────────────┘\n\n");
+                printf("  ... espera. Isto está certo? Vou lançar outra vez.\n");
+                printf("  A moeda enganou-se. Ela quer mesmo dizer WHOPPER.\n\n");
+                moeda = 0;
+                printf("  Pronto. WHOPPER. Vai.\n");
+                quer_bk = 1; goto persuadido;
+            }
+        }
+
+        case 6: { /* confronto com outras comidas */
+            printf("\n  ┌─ CONFRONTO DE COMIDAS — BK VS MUNDO ──────────────┐\n");
+            printf("  │  /* quem achas que ganha? */                       │\n");
+            printf("  └──────────────────────────────────────────────────────┘\n\n");
+            printf("  O quê? Estás a preferir outra comida ao Whopper?\n");
+            printf("  Achas que isso é possível? Vamos ver...\n\n");
+            printf("  O que é que estás a considerar?\n\n");
+            printf("  [1] McDonald's (traidor)\n");
+            printf("  [2] Pizza (italianos a rir)\n");
+            printf("  [3] Sushi (peixe cru? em Portugal?)\n");
+            printf("  [4] Comida caseira (és adulto?)\n");
+            printf("  [5] KFC (o primo do BK)\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            opcao_pergunta = atoi(input);
+
+            printf("\n  A ANALISAR...\n\n");
+            printf("  ┌─────────────────────────────────────────────────────┐\n");
+            switch (opcao_pergunta) {
+                case 1:
+                    printf("  │  McDonald's vs Whopper:                               │\n");
+                    printf("  │  O Big Mac é tipo aquela relação que acabou há anos   │\n");
+                    printf("  │  mas tu continuas a pensar 'e se...'. Não. Não voltes.│\n");
+                    printf("  │  O Whopper é maior, melhor e tem fogo a sério.        │\n");
+                    printf("  │  BIG MAC: ❌    WHOPPER: ✅                            │\n");
+                    break;
+                case 2:
+                    printf("  │  Pizza vs Whopper:                                    │\n");
+                    printf("  │  Pizza é boa. Mas pizza não é um hambúrguer.          │\n");
+                    printf("  │  É como comparar uma ida ao teatro com um concerto.    │\n");
+                    printf("  │  Ambos fixes, mas agora apetece-te é um concerto.      │\n");
+                    printf("  │  PIZZA: 🍕    WHOPPER: 🍔 (vence por ser grelhado)    │\n");
+                    break;
+                case 3:
+                    printf("  │  Sushi vs Whopper:                                    │\n");
+                    printf("  │  Amigo, és português. O teu palpite foi criado a pão  │\n");
+                    printf("  │  e carne. Não a algas e arroz avinagrado.              │\n");
+                    printf("  │  O Whopper é a tua identidade cultural.                │\n");
+                    printf("  │  SUSHI: 🍣    WHOPPER: 🍔 (vitória por nocaute)        │\n");
+                    break;
+                case 4:
+                    printf("  │  Comida caseira vs Whopper:                           │\n");
+                    printf("  │  A minha avó também cozinha bem. Mas a minha avó      │\n");
+                    printf("  │  não tem queijo derretido nem molho especial.         │\n");
+                    printf("  │  E a minha avó está a 30km. O BK está a 800m.         │\n");
+                    printf("  │  CASEIRA: 🏠    WHOPPER: 🍔 (proximidade vence)       │\n");
+                    break;
+                case 5:
+                    printf("  │  KFC vs Whopper:                                      │\n");
+                    printf("  │  O KFC é fixe para uma cena diferente. Mas...         │\n");
+                    printf("  │  Frango frito vs carne grelhada no fogo?               │\n");
+                    printf("  │  Achas que os 11 temperos secretos batem o Whopper?    │\n");
+                    printf("  │  KFC: 🐔    WHOPPER: 🍔 (a chama vence sempre)        │\n");
+                    break;
+                default:
+                    printf("  │  Isso vs Whopper:                                     │\n");
+                    printf("  │  Nem sei o que é isso, mas aposto que o Whopper ganha.│\n");
+            }
+            printf("  └─────────────────────────────────────────────────────┘\n\n");
+            printf("  Conclusão: vais ao BK. E pedes também batatas.\n");
             quer_bk = 1; goto persuadido;
         }
 
-        printf("\n  [PERSUASÃO] a tentar argumento financeiro...\n\n");
+        case 7: { /* QUERO SABER MAIS */
+            printf("\n  ┌─ MODO INVESTIGATIVO ──────────────────────────────┐\n");
+            printf("  │  /* informação é poder — whopper é poder */        │\n");
+            printf("  └──────────────────────────────────────────────────────┘\n\n");
+            printf("  Vais saber TUDO antes de decidir.\n");
+            printf("  Mas aviso já: no fim vais ao BK na mesma.\n\n");
 
-        /* pergunta 5 */
-        printf("  E se eu te dissesse que tens um voucher de desconto?\n\n");
-        printf("  [1] Mesmo assim não\n");
-        printf("  [2] Voucher?? Onde?\n");
-        printf("\n  › ");
-        fgets(input, sizeof(input), stdin);
-        if (atoi(input) == 2) {
-            printf("\n  [›] a gerar voucher fictício... BKPT2026 — 20%% desconto\n");
-            printf("  [›] utilizador motivado por poupança — PERSUASÃO BEM SUCEDIDA\n");
+            /* Força o pipeline todo antes de decidir */
+            classificar_fome(&u.fome);
+            analisar_carteira(&u.carteira);
+            avaliar_psicologia(&u.psicologia);
+            avaliar_dieta(&u.dieta);
+            localizar_bk(&u.bk);
+            gerar_desculpa(&u);
+            u.whopper_desejado = recomendar_whopper(&u);
+            calcular_indice_resistencia(&u);
+            simular_timelines(&u, 100);
+
+            printf("\n  OK, AGORA é que decides. Depois desta informação toda...\n\n");
+            printf("  [1] SIM — vou ao BK (óbvio)\n");
+            printf("  [2] Não — mesmo com estes dados\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            if (atoi(input) == 1) {
+                quer_bk = 1; goto persuadido;
+            } else {
+                printf("\n  [›] TU... TU VIESTE ATÉ AQUI, VISTE TUDO, E AINDA DIZES NÃO?\n");
+                printf("  [›] Olha, já que viste o pipeline todo, já comeste o whopper mental.\n");
+                printf("  [›] Mais vale ires comer o real.\n");
+                quer_bk = 1; goto persuadido;
+            }
+        }
+
+        case 8: { /* SÓ VIM PELOS ERROS DE COMPILAÇÃO */
+            printf("\n  ┌─ EASTER EGG: RELATÓRIO DE ERROS ─────────────────┐\n");
+            printf("  │  /* porque é que estás a executar em vez de        │\n");
+            printf("  │     compilar? */                                   │\n");
+            printf("  └──────────────────────────────────────────────────────┘\n\n");
+            printf("  [WARN] bk_query.c:42:15: warning: 'fome' may be used uninitialized\n");
+            printf("  [WARN] bk_query.c:69:1: warning: 'dieta' set but not used\n");
+            printf("  [WARN] bk_query.c:99:9: warning: 'vergonha' defined but never used\n");
+            printf("  [FATAL] bk_query.c:666:0: error: 'vontade_de_comer_saudavel' undeclared\n");
+            printf("  [ERROR] linker: cannot find -lculpa (culpa não encontrada — assumir 0%%)\n");
+            printf("  [ERROR] linker: cannot find -lvergonha (vergonha não encontrada — continuar)\n");
+            printf("\n  ┌─────────────────────────────────────────────────────┐\n");
+            printf("  │  Compilação falhou com 2 erros e 3 warnings.        │\n");
+            printf("  │  Mas como isto é um easter egg, vais ao BK na mesma. │\n");
+            printf("  └─────────────────────────────────────────────────────┘\n\n");
             quer_bk = 1; goto persuadido;
         }
 
-        printf("\n  [PERSUASÃO] a ativar protocolo de última instância...\n\n");
+        case 9: { /* MODO FILOSÓFICO */
+            printf("\n  ┌─ O QUE FARIA O WHOPPER? ──────────────────────────┐\n");
+            printf("  │  /* philosophia whopperis — questões profundas */  │\n");
+            printf("  └──────────────────────────────────────────────────────┘\n\n");
+            printf("  Responde a estas questões existenciais:\n\n");
 
-        /* pergunta 6 — impossível de resistir */
-        printf("  Ok. Mas e se fosse um Whopper grátis?\n\n");
-        printf("  [1] Não quero mesmo\n");
-        printf("  [2] ...grátis?\n");
-        printf("\n  › ");
-        fgets(input, sizeof(input), stdin);
-        if (atoi(input) == 2) {
-            printf("\n  [›] ninguém resiste a grátis — PERSUASÃO BEM SUCEDIDA\n");
+            printf("  Se um Whopper cai na floresta e ninguém está a ouvir...\n");
+            printf("  ele faz algum som?\n\n");
+            printf("  [1] Sim, faz\n");
+            printf("  [2] Não, só faz se alguém ouvir\n");
+            printf("  [3] Quem é que come um Whopper no meio da floresta?\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            printf("\n  [FIL] Resposta interessante. Mas uma coisa é certa:\n");
+            printf("  [FIL] Se um Whopper cai no teu estômago, faz sempre som.\n");
+            printf("  [FIL] Som de felicidade.\n\n");
+
+            printf("  O Whopper existe porque nós existimos, ou\n");
+            printf("  nós existimos porque o Whopper precisa de nós?\n\n");
+            printf("  [1] Nós existimos para comer Whopper\n");
+            printf("  [2] O Whopper existe porque temos fome\n");
+            printf("  [3] Isto é demasiado profundo para eu pensar agora\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            printf("\n  [FIL] Ambas as respostas estão corretas.\n");
+            printf("  [FIL] É tipo o ovo e a galinha, mas com mais bacon.\n\n");
+
+            printf("  E se o sentido da vida fosse... ir ao BK?\n\n");
+            printf("  [1] Talvez seja!\n");
+            printf("  [2] Não, o sentido da vida é 42\n");
+            printf("  [3] Estou a ficar com fome a falar disto\n");
+            printf("\n  › ");
+            fgets(input, sizeof(input), stdin);
+            printf("\n  [FIL] 42 é o código de saída quando rejeitas o Whopper.\n");
+            printf("  [FIL] Coincidência? Não me parece.\n");
+            printf("  [FIL] O universo está a dar-te sinais. Vai ao BK.\n");
             quer_bk = 1; goto persuadido;
         }
 
-        /* chegou até aqui — resistência máxima */
-        printf("\n  [FATAL] utilizador imune à persuasão — anomalia detetada\n");
-        printf("  [FATAL] a registar ocorrência no servidor BK Central...\n");
-        printf("  [FATAL] caso enviado para análise da equipa de investigação\n\n");
-        printf("  ╔══════════════════════════════════════════════════════╗\n");
-        printf("  ║  Parabéns. És a primeira pessoa na história a       ║\n");
-        printf("  ║  resistir a 6 tentativas de persuasão Whopper.      ║\n");
-        printf("  ║                                                      ║\n");
-        printf("  ║  Isto vai para o relatório.                         ║\n");
-        printf("  ║  Process exited: EXIT_LENDARIO (99)                 ║\n");
-        printf("  ╚══════════════════════════════════════════════════════╝\n\n");
-        return 99;
+        default:
+            printf("\n  [ERROR] opção inválida? Como? O programa é que decide agora.\n");
+            quer_bk = 1;
+            goto persuadido;
     }
 
-    persuadido:
-        if (quer_bk && !u.quer_bk) {
-            printf("\n  ╔══════════════════════════════════════════════════════╗\n");
-            printf("  ║  PERSUASÃO BEM SUCEDIDA — bem-vindo ao lado certo.  ║\n");
-            printf("  ║  a retomar pipeline normal...                        ║\n");
-            printf("  ╚══════════════════════════════════════════════════════╝\n\n");
-            u.quer_bk = 1;
-        }
+    /* se por acaso algum case não tiver goto nem return, cai aqui */
+    quer_bk = 1;
+    u.quer_bk = 1;
+
+persuadido:
+    if (quer_bk && !u.quer_bk) {
+        printf("\n  ╔══════════════════════════════════════════════════════╗\n");
+        printf("  ║  PERSUASÃO BEM SUCEDIDA — bem-vindo ao lado certo.  ║\n");
+        printf("  ║  a retomar pipeline normal...                        ║\n");
+        printf("  ╚══════════════════════════════════════════════════════╝\n\n");
+        u.quer_bk = 1;
+    }
 
     /* pipeline completo de validação */
     classificar_fome(&u.fome);
