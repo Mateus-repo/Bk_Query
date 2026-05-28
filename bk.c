@@ -1254,6 +1254,8 @@ int main(void) {
             printf("  ║  Nunca mais dizes não ao BK, pois não?             ║\n");
             printf("  ╚══════════════════════════════════════════════════════╝\n\n");
             printf("  Process exited with code 42 (WHOPPERED)\n");
+            printf("  Pressiona ENTER para sair...\n");
+            { int c; while ((c = getchar()) != '\n' && c != EOF); getchar(); }
             return 42;
         }
 
